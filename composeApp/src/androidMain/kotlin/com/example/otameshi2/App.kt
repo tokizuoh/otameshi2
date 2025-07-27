@@ -33,6 +33,7 @@ fun App() {
                 val manager = CryptoManager()
                 manager.aesEncryptAndDecrypt()
                 manager.rsaOaepEncryptAndDecrypt()
+                manager.pbkdf2DeriveKey()
                 showContent = !showContent 
             }) {
                 Text("Click me!")

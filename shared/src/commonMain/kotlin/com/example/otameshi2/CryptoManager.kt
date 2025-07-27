@@ -60,4 +60,45 @@ class CryptoManager {
         println("Decrypted: ${decryptedData.decodeToString()}")
         println("Success: ${plaintext.contentEquals(decryptedData)}")
     }
+    
+    fun pbkdf2DeriveKey() = runBlocking {
+        val provider = CryptographyProvider.Default
+        val pbkdf2 = provider.get(PBKDF2)
+        
+        // パスワードとソルト
+        val password = "MySecurePassword123!"
+        val salt = "MySalt123".encodeToByteArray()
+        
+        // PBKDF2設定（SHA-256、10万回反復、32バイト出力）
+        val secretDerivation = pbkdf2.secretDerivation(
+            digest = SHA256,
+            iterations = 100000,
+            outputSize = 32.bytes,
+            salt = salt
+        )
+        
+        // キー導出
+        val derivedKey = secretDerivation.deriveSecret(password.encodeToByteArray())
+        
+        // 同じパスワードとソルトで再度導出（一致するはず）
+        val derivedKey2 = secretDerivation.deriveSecret(password.encodeToByteArray())
+        
+        // 16進数文字列に変換
+        val keyHex = derivedKey.toByteArray().joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        val keyHex2 = derivedKey2.toByteArray().joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        
+        println("PBKDF2 Test:")
+        println("Password: $password")
+        println("Salt: ${salt.decodeToString()}")
+        println("Iterations: 100000")
+        println("Output size: 32 bytes")
+        println("Derived key 1: $keyHex")
+        println("Derived key 2: $keyHex2")
+        println("Keys match: ${derivedKey.toByteArray().contentEquals(derivedKey2.toByteArray())}")
+        println("Key length: ${derivedKey.toByteArray().size} bytes")
+    }
 }
