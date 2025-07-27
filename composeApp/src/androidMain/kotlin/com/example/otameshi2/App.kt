@@ -32,6 +32,7 @@ fun App() {
             Button(onClick = { 
                 val manager = CryptoManager()
                 manager.aesEncryptAndDecrypt()
+                manager.rsaOaepEncryptAndDecrypt()
                 showContent = !showContent 
             }) {
                 Text("Click me!")

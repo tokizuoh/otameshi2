@@ -8,6 +8,7 @@ struct ContentView: View {
             Button("Click me!") {
                 let manager = CryptoManager()
                 manager.aesEncryptAndDecrypt()
+                manager.rsaOaepEncryptAndDecrypt()
             }
         }
     }
