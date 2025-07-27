@@ -1,8 +1,11 @@
 package com.example.otameshi2
 
 import dev.whyoleg.cryptography.BinarySize.Companion.bits
+import dev.whyoleg.cryptography.BinarySize.Companion.bytes
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.AES
+import dev.whyoleg.cryptography.algorithms.HKDF
+import dev.whyoleg.cryptography.algorithms.PBKDF2
 import dev.whyoleg.cryptography.algorithms.RSA
 import dev.whyoleg.cryptography.algorithms.SHA256
 import dev.whyoleg.cryptography.DelicateCryptographyApi
@@ -99,6 +102,62 @@ class CryptoManager {
         println("Derived key 1: $keyHex")
         println("Derived key 2: $keyHex2")
         println("Keys match: ${derivedKey.toByteArray().contentEquals(derivedKey2.toByteArray())}")
+        println("Key length: ${derivedKey.toByteArray().size} bytes")
+    }
+    
+    fun hkdfDeriveKey() = runBlocking {
+        val provider = CryptographyProvider.Default
+        val hkdf = provider.get(HKDF)
+        
+        // 入力キーマテリアル（IKM）、ソルト、情報
+        val inputKeyMaterial = "MyInputKeyMaterial123".encodeToByteArray()
+        val salt = "MySalt456".encodeToByteArray()
+        val info = "MyAppEncryptionKey".encodeToByteArray()
+        
+        // HKDF設定（SHA-256、32バイト出力）
+        val secretDerivation = hkdf.secretDerivation(
+            digest = SHA256,
+            outputSize = 32.bytes,
+            salt = salt,
+            info = info
+        )
+        
+        // キー導出
+        val derivedKey = secretDerivation.deriveSecret(inputKeyMaterial)
+        
+        // 同じパラメータで再度導出（一致するはず）
+        val derivedKey2 = secretDerivation.deriveSecret(inputKeyMaterial)
+        
+        // 異なる情報（info）で導出（異なるキーになるはず）
+        val secretDerivationDifferentInfo = hkdf.secretDerivation(
+            digest = SHA256,
+            outputSize = 32.bytes,
+            salt = salt,
+            info = "DifferentInfo".encodeToByteArray()
+        )
+        val derivedKeyDifferentInfo = secretDerivationDifferentInfo.deriveSecret(inputKeyMaterial)
+        
+        // 16進数文字列に変換
+        val keyHex = derivedKey.toByteArray().joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        val keyHex2 = derivedKey2.toByteArray().joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        val keyHexDifferent = derivedKeyDifferentInfo.toByteArray().joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        
+        println("HKDF Test:")
+        println("IKM: ${inputKeyMaterial.decodeToString()}")
+        println("Salt: ${salt.decodeToString()}")
+        println("Info: ${info.decodeToString()}")
+        println("Output size: 32 bytes")
+        println("Derived key 1: $keyHex")
+        println("Derived key 2: $keyHex2")
+        println("Keys match: ${derivedKey.toByteArray().contentEquals(derivedKey2.toByteArray())}")
+        println("Different info key: $keyHexDifferent")
+        println("Different from original: ${!derivedKey.toByteArray().contentEquals(derivedKeyDifferentInfo.toByteArray())}")
         println("Key length: ${derivedKey.toByteArray().size} bytes")
     }
 }
