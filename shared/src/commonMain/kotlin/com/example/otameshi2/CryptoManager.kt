@@ -160,4 +160,61 @@ class CryptoManager {
         println("Different from original: ${!derivedKey.toByteArray().contentEquals(derivedKeyDifferentInfo.toByteArray())}")
         println("Key length: ${derivedKey.toByteArray().size} bytes")
     }
+    
+    fun hmacSignAndVerify() = runBlocking {
+        val provider = CryptographyProvider.Default
+        val hmac = provider.get(HMAC)
+        
+        // 固定キーでHMAC-SHA256キーを作成（テスト用）
+        val fixedKeyBytes = "mysecretkey12345mysecretkey12345".encodeToByteArray() // 32バイト固定キー
+        val keyDecoder = hmac.keyDecoder(SHA256)
+        val key = keyDecoder.decodeFromByteArray(HMAC.Key.Format.RAW, fixedKeyBytes)
+        
+        // 署名するデータ
+        val message = "Hello HMAC-SHA256! This is my secret message.".encodeToByteArray()
+        
+        // HMAC署名の生成
+        val signatureGenerator = key.signatureGenerator()
+        val signature = signatureGenerator.generateSignature(message)
+        
+        // HMAC署名の検証
+        val signatureVerifier = key.signatureVerifier()
+        val isValid = try {
+            signatureVerifier.verifySignature(message, signature)
+            true
+        } catch (e: Exception) {
+            false
+        }
+        
+        // 異なるメッセージでの検証（失敗するはず）
+        val differentMessage = "Different message".encodeToByteArray()
+        val isValidDifferent = try {
+            signatureVerifier.verifySignature(differentMessage, signature)
+            true
+        } catch (e: Exception) {
+            false
+        }
+        
+        // 署名を16進数文字列に変換
+        val signatureHex = signature.joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        
+        println("HMAC-SHA256 Test:")
+        println("Message: ${message.decodeToString()}")
+        println("Signature: $signatureHex")
+        println("Signature length: ${signature.size} bytes")
+        println("Verification (correct): $isValid")
+        println("Verification (different message): $isValidDifferent")
+        
+        // 同じキーで別のメッセージの署名
+        val message2 = "Second message for HMAC".encodeToByteArray()
+        val signature2 = signatureGenerator.generateSignature(message2)
+        val signature2Hex = signature2.joinToString("") { byte ->
+            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
+        }
+        println("Second message: ${message2.decodeToString()}")
+        println("Second signature: $signature2Hex")
+        println("Signatures different: ${!signature.contentEquals(signature2)}")
+    }
 }

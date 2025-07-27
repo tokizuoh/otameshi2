@@ -11,6 +11,7 @@ struct ContentView: View {
                 manager.rsaOaepEncryptAndDecrypt()
                 manager.pbkdf2DeriveKey()
                 manager.hkdfDeriveKey()
+                manager.hmacSignAndVerify()
             }
         }
     }

@@ -35,6 +35,7 @@ fun App() {
                 manager.rsaOaepEncryptAndDecrypt()
                 manager.pbkdf2DeriveKey()
                 manager.hkdfDeriveKey()
+                manager.hmacSignAndVerify()
                 showContent = !showContent 
             }) {
                 Text("Click me!")
